@@ -1,0 +1,42 @@
+﻿[diag] JPA OK � EclipseLink resolvido.
+mvn : mai. 02, 2026 9:47:47 DA TARDE org.jboss.weld.bootstrap.WeldStartup <clinit>
+At line:1 char:603
++ ... lyContinue; mvn -q compile exec:java '-Dkairos.main=pt.kairos.materna ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (mai. 02, 2026 9...tartup <clinit>:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+INFO: WELD-000900: 5.1.3 (Final)
+mai. 02, 2026 9:47:47 DA TARDE org.jboss.weld.environment.deployment.discovery.ReflectionDiscoveryStrategy 
+processAnnotatedDiscovery
+INFO: WELD-ENV-000014: Falling back to Java Reflection for bean-discovery-mode="annotated" discovery. Add 
+org.jboss:jandex to the classpath to speed-up startup.
+mai. 02, 2026 9:47:47 DA TARDE org.jboss.weld.bootstrap.WeldStartup startContainer
+INFO: WELD-000101: Transactional services not available. Injection of @Inject UserTransaction not available. 
+Transactional observers will be invoked synchronously.
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.core.portableextension.LangChain4JAIServicePortableExtension 
+processAnnotatedType
+INFO: processAnnotatedType register pt.kairos.maternal.ai.KairosAssistant
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.core.portableextension.LangChain4JAIServicePortableExtension 
+processAnnotatedType
+INFO: processAnnotatedType register pt.kairos.maternal.ai.LearningExtractor
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.core.portableextension.LangChain4JAIServicePortableExtension 
+afterBeanDiscovery
+INFO: afterBeanDiscovery create synthetic:  pt.kairos.maternal.ai.LearningExtractor
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.core.portableextension.LangChain4JAIServicePortableExtension 
+afterBeanDiscovery
+INFO: afterBeanDiscovery create synthetic:  pt.kairos.maternal.ai.KairosAssistant
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.plugin.CommonLLMPluginCreator prepareAllLLMBeans
+INFO: detected beans to create : [chat-model]
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.plugin.CommonLLMPluginCreator prepareAllLLMBeans
+INFO: Builder class : class dev.langchain4j.model.openai.OpenAiChatModel$OpenAiChatModelBuilder
+mai. 02, 2026 9:47:48 DA TARDE dev.langchain4j.cdi.core.portableextension.LangChain4JPluginsPortableExtension 
+lambda$afterBeanDiscovery$0
+INFO: Types: class dev.langchain4j.model.openai.OpenAiChatModel,dev.langchain4j.model.chat.ChatModel
+mai. 02, 2026 9:47:48 DA TARDE org.jboss.weld.environment.se.WeldContainer fireContainerInitializedEvent
+INFO: WELD-ENV-002003: Weld SE container 8a38d1c9-98e3-4dc0-9317-dfa864a823e9 initialized
+Kairos web server a escutar em http://localhost:9080/api/chat
+Ctrl+C para parar.
+mai. 02, 2026 9:47:50 DA TARDE dev.langchain4j.cdi.plugin.CommonLLMPluginCreator create
+INFO: Create instance for :chat-model, target class : class dev.langchain4j.model.openai.OpenAiChatModel, builderClass 
+: class dev.langchain4j.model.openai.OpenAiChatModel$OpenAiChatModelBuilder

@@ -1,0 +1,7 @@
+target/
+kairos-data/
+.env
+*.iml
+.idea/
+.vscode/
+*.log

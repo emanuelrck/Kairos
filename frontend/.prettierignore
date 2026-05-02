@@ -1,0 +1,4 @@
+dist
+dist-tsbuild
+node_modules
+package-lock.json

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>pt.kairos</groupId>
+    <artifactId>kairos-maternal</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Kairos Maternal Health Engine</name>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+
+        <!-- Jakarta EE 10 — alinhado com o que o langchain4j-cdi 1.2.0-Beta1 testou.
+             O esqueleto do hackathon usa 11; o WAR final pode subir para 11
+             depois de validarmos compatibilidade com o app server escolhido. -->
+        <jakartaee.version>10.0.0</jakartaee.version>
+        <!-- langchain4j 1.14.0 = versão recente, com suporte a max_completion_tokens.
+             O langchain4j-cdi 1.2.0-Beta1 foi compilado contra 1.12.2 mas é
+             compatível em runtime com 1.14.x para o subset de APIs que usa. -->
+        <langchain4j.version>1.14.0</langchain4j.version>
+        <langchain4j-openai.version>1.14.0</langchain4j-openai.version>
+        <langchain4j-cdi.version>1.2.0-Beta1</langchain4j-cdi.version>
+        <weld.version>5.1.3.Final</weld.version>
+        <eclipselink.version>4.0.4</eclipselink.version>
+        <h2.version>2.3.232</h2.version>
+        <yasson.version>3.0.4</yasson.version>
+        <smallrye-config.version>3.10.2</smallrye-config.version>
+        <jandex.version>3.2.2</jandex.version>
+
+        <!-- Default para `mvn exec:java`. Override:
+             -Dkairos.main=pt.kairos.maternal.web.WebServer -->
+        <kairos.main>pt.kairos.maternal.cli.Main</kairos.main>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>${jakartaee.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- LangChain4j core + OpenAI -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+            <version>${langchain4j-openai.version}</version>
+        </dependency>
+        <!-- HTTP client baseado no java.net.http.HttpClient do JDK -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-http-client-jdk</artifactId>
+            <version>${langchain4j-openai.version}</version>
+        </dependency>
+        <!-- SLF4J binding simples para silenciar o aviso e ver logs -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
+        </dependency>
+
+        <!-- LangChain4j CDI integration -->
+        <dependency>
+            <groupId>dev.langchain4j.cdi</groupId>
+            <artifactId>langchain4j-cdi-portable-ext</artifactId>
+            <version>${langchain4j-cdi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi.mp</groupId>
+            <artifactId>langchain4j-cdi-config</artifactId>
+            <version>${langchain4j-cdi.version}</version>
+        </dependency>
+
+        <!-- CDI SE container for the CLI / WebServer. -->
+        <dependency>
+            <groupId>org.jboss.weld.se</groupId>
+            <artifactId>weld-se-core</artifactId>
+            <version>${weld.version}</version>
+        </dependency>
+
+        <!-- JPA provider + H2 for the CLI persistence (file-backed) -->
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>eclipselink</artifactId>
+            <version>${eclipselink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+        </dependency>
+
+        <!-- JSON-B implementation (Yasson). -->
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>${yasson.version}</version>
+        </dependency>
+
+        <!-- MicroProfile Config standalone (LangChain4j-CDI usa-o). -->
+        <dependency>
+            <groupId>io.smallrye.config</groupId>
+            <artifactId>smallrye-config</artifactId>
+            <version>${smallrye-config.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>kairos-maternal</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+
+            <!-- Build a Jandex index so Weld SE can discover beans without scanning -->
+            <plugin>
+                <groupId>io.smallrye</groupId>
+                <artifactId>jandex-maven-plugin</artifactId>
+                <version>${jandex.version}</version>
+                <executions>
+                    <execution>
+                        <id>make-index</id>
+                        <goals>
+                            <goal>jandex</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- CLI:        mvn exec:java
+                 Web server: mvn exec:java -Dkairos.main=pt.kairos.maternal.web.WebServer
+                                          -Dexec.classpathScope=test    (inclui scope=provided) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <mainClass>${kairos.main}</mainClass>
+                    <classpathScope>compile</classpathScope>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.3</version>
+                <configuration>
+                    <runtimeArtifact>
+                        <groupId>io.openliberty.beta</groupId>
+                        <artifactId>openliberty-runtime</artifactId>
+                        <version>26.0.0.3-beta</version>
+                        <type>zip</type>
+                    </runtimeArtifact>
+                    <verifyAppStartTimeout>180</verifyAppStartTimeout>
+                    <serverStartTimeout>180</serverStartTimeout>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.wildfly.plugins</groupId>
+                <artifactId>wildfly-maven-plugin</artifactId>
+                <version>5.1.3.Final</version>
+                <configuration>
+                    <feature-packs>
+                        <feature-pack>
+                            <location>org.wildfly:wildfly-galleon-pack:39.0.1.Final</location>
+                        </feature-pack>
+                    </feature-packs>
+                    <layers>
+                        <layer>ee-core-profile-server</layer>
+                        <layer>cdi</layer>
+                        <layer>jaxrs-core</layer>
+                    </layers>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>payara</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.cargo</groupId>
+                        <artifactId>cargo-maven3-plugin</artifactId>
+                        <version>1.10.26</version>
+                        <configuration>
+                            <container>
+                                <containerId>payara</containerId>
+                                <zipUrlInstaller>
+                                    <url>https://repo1.maven.org/maven2/fish/payara/distributions/payara/7.2025.2/payara-7.2025.2.zip</url>
+                                </zipUrlInstaller>
+                            </container>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>glassfish</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.cargo</groupId>
+                        <artifactId>cargo-maven3-plugin</artifactId>
+                        <version>1.10.26</version>
+                        <configuration>
+                            <container>
+                                <containerId>glassfish8x</containerId>
+                                <zipUrlInstaller>
+                                    <url>https://github.com/eclipse-ee4j/glassfish/releases/download/8.0.0/glassfish-8.0.0.zip</url>
+                                </zipUrlInstaller>
+                            </container>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
