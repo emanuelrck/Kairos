@@ -1,0 +1,13 @@
+Kairos — Vigilância materna contínua entre consultas
+
+As complicações hipertensivas da gravidez, como a pré-eclâmpsia, são responsáveis por cerca de 14% das mortes maternas no mundo (OMS). Quase todas são evitáveis se detectadas a tempo. O problema raramente é falta de medicina: é a janela cega entre consultas pré-natais, 4 a 6 semanas em que sintomas críticos como tensão alta, cefaleias persistentes, edema súbito ou redução de movimentos fetais ficam por reportar até ser demasiado tarde.
+
+Kairos fecha essa janela. É uma plataforma com duas faces:
+
+A app da grávida funciona como um diário clínico assistido. Em menos de 60 segundos, a mãe regista a sua leitura diária — tensão arterial, frequência cardíaca, peso, glicemia, temperatura — e responde a uma checklist breve de sintomas (cefaleia, alterações visuais, edema, movimentos fetais). O dashboard devolve, em linguagem simples, um indicador de risco do dia (tudo bem, atenção, risco elevado) com uma justificação acolhedora e um botão directo para contactar a obstetra. Tem ainda histórico de leituras, ecrã de alertas e um assistente conversacional em português europeu que aprende progressivamente sobre a mãe — extrai factos clínicos da conversa, persiste-os e reinjecta-os nas conversas seguintes, evitando perguntar duas vezes a mesma coisa.
+
+O portal clínico dá ao profissional de saúde uma vista agregada das suas pacientes: dashboard, lista de pacientes com observações, agenda e um feed de alertas precoces para combinações de sinais compatíveis com pré-eclâmpsia (por exemplo, tensão 144/92 mmHg associada a visão turva).
+
+Sobre guardrails clínicos inquebráveis: a IA não diagnostica. Perante sinais de alarme, redirecciona para contactos de emergência como o 112 ou para o profissional de saúde que a acompanha. É uma camada de triagem e ponte para o sistema de saúde, não um substituto.
+
+Implementação de referência do Jakarta EE Hackathon Challenge "The Know-Me Engine", construída sobre Jakarta EE (CDI, JAX-RS, JPA, JSON-B), LangChain4j-CDI e React + TypeScript. Os mesmos beans CDI correm em modo CLI (Weld SE) e em servidor de aplicações (Open Liberty e WildFly testados; perfis Maven prontos para Payara e GlassFish), demonstrando portabilidade ponta-a-ponta.
