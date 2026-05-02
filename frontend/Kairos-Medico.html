@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kairos · Portal Clínico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: #F6EDEC;
+    color: #2A1620;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #D94B95; color: #fff; }
+  /* Scrollbars discretas */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(31,26,29,0.18); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(31,26,29,0.30); background-clip: padding-box; border: 2px solid transparent; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  input, textarea, button { font-family: inherit; }
+  input:focus, textarea:focus { border-color: #C71585 !important; box-shadow: 0 0 0 3px rgba(199,21,133,0.10); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Tokens partilhados da app da grávida (paleta KAIROS, fontes) -->
+<script type="text/babel" src="design-tokens.jsx"></script>
+
+<!-- Portal médico -->
+<script type="text/babel" src="medico-tokens.jsx"></script>
+<script type="text/babel" src="medico-shell.jsx"></script>
+<script type="text/babel" src="medico-screens-auth.jsx"></script>
+<script type="text/babel" src="medico-screens-patients.jsx"></script>
+<script type="text/babel" src="medico-screens-alerts.jsx"></script>
+<script type="text/babel" src="medico-screens-dashboard.jsx"></script>
+<script type="text/babel" src="medico-screens-agenda.jsx"></script>
+<script type="text/babel" src="medico-chatbot.jsx"></script>
+
+<script type="text/babel">
+function MedicoApp() {
+  const [screen, setScreen] = React.useState('login');
+  const [patientId, setPatientId] = React.useState('p1');
+
+  const doctor = { name: 'Dra. Helena Matos', role: 'Obstetrícia · CHULN', initials: 'HM' };
+
+  const go = (s) => setScreen(s);
+
+  // Ecrãs com shell
+  if (screen === 'login') {
+    return <ScreenMedicoLogin go={go} />;
+  }
+
+  const renderInShell = () => {
+    switch (screen) {
+      case 'dashboard':      return <ScreenMedicoDashboard go={go} doctor={doctor} setPatientId={setPatientId} />;
+      case 'patients':       return <ScreenMedicoPatients go={go} setPatientId={setPatientId} />;
+      case 'patient-detail': return <ScreenMedicoPatientDetail go={go} patientId={patientId} />;
+      case 'alerts':         return <ScreenMedicoAlerts go={go} setPatientId={setPatientId} />;
+      case 'agenda':         return <ScreenMedicoAgenda />;
+      default:               return <ScreenMedicoDashboard go={go} doctor={doctor} setPatientId={setPatientId} />;
+    }
+  };
+
+  // Ativo na sidebar — patient-detail mantém "patients" ativo
+  const activeNav = screen === 'patient-detail' ? 'patients' : screen;
+
+  return (
+    <>
+      <MedicoShell active={activeNav} go={go} doctor={doctor} alertsCount={3}>
+        {renderInShell()}
+      </MedicoShell>
+      <ChatbotFAB />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<MedicoApp />);
+</script>
+</body>
+</html>
