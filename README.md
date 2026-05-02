@@ -5,7 +5,8 @@ Assistente conversacional especializado em **saúde materna**, com tom acolhedor
 Implementação de referência do **Jakarta EE Hackathon Challenge — "The Know-Me Engine"** com integração ponta-a-ponta:
 
 - **Backend Jakarta EE 10/11** com CDI, JAX-RS, JPA e LangChain4j-CDI
-- **Frontend React + TypeScript + Vite** que consome `/api/chat`
+- **App da grávida** ([frontend-mae/](frontend-mae/)) — React + TypeScript + Vite, consome `/api/chat`
+- **Portal clínico** ([frontend-medico/](frontend-medico/)) — HTML estático + React UMD, dashboard para profissionais de saúde
 - **Mesmos beans CDI** correm em CLI (Weld SE) e em servidor de aplicações (Open Liberty / WildFly / Payara / GlassFish)
 
 > ⚠️ **Aviso clínico:** A Kairos não substitui consulta médica. Os *system prompts* forçam-na a remeter para o **SNS24 (808 24 24 24)** ou para o **112** em emergências.
@@ -31,19 +32,23 @@ Implementação de referência do **Jakarta EE Hackathon Challenge — "The Know
 ## Arquitectura
 
 ```
-┌──────────────────────┐        POST /api/chat        ┌─────────────────────────────┐
-│  Frontend (Vite)     │ ───────────────────────────▶ │  Backend Jakarta EE         │
-│  React + TS, :5173   │                              │  JAX-RS · CDI · JPA · :9080 │
-│  proxy /api → :9080  │ ◀─────────────────────────── │  LangChain4j-CDI            │
-└──────────────────────┘        JSON resposta         └──────────────┬──────────────┘
-                                                                     │
-                                                       ┌─────────────┴─────────────┐
-                                                       │                           │
-                                                ┌──────▼──────┐           ┌────────▼────────┐
-                                                │ OpenAI API  │           │  H2 (file)      │
-                                                │  (gpt-5 /   │           │  perfil + factos│
-                                                │  gpt-4o-mini│           │  aprendidos     │
-                                                └─────────────┘           └─────────────────┘
+┌────────────────────────┐                                ┌─────────────────────────────┐
+│  frontend-mae          │ ──── POST /api/chat ─────────▶ │  Backend Jakarta EE         │
+│  React+TS+Vite, :5173  │ ◀─────────────────────────────│  JAX-RS · CDI · JPA · :9080 │
+│  proxy /api → :9080    │                                │  LangChain4j-CDI            │
+└────────────────────────┘                                └──────────────┬──────────────┘
+                                                                         │
+┌────────────────────────┐                                               │
+│  frontend-medico       │ ──── POST /api/chat ──────────────────────────┤
+│  HTML+React UMD, :5174 │ ◀─────────────────────────────────────────────┤
+└────────────────────────┘                                               │
+                                                          ┌──────────────┴──────────────┐
+                                                          │                             │
+                                                   ┌──────▼──────┐             ┌────────▼────────┐
+                                                   │ OpenAI API  │             │  H2 (file)      │
+                                                   │  (gpt-5 /   │             │  perfil + factos│
+                                                   │  gpt-4o-mini│             │  aprendidos     │
+                                                   └─────────────┘             └─────────────────┘
 ```
 
 **Fluxo de uma pergunta:**
@@ -105,12 +110,13 @@ Ambos os scripts:
 
 1. Carregam o `.env` da raiz.
 2. Validam que `OPENAI_API_KEY` está definida.
-3. Arrancam o backend Jakarta EE na **porta 9080** e o frontend Vite na **porta 5173**.
-4. Encerram os dois processos com `Ctrl+C`.
+3. Arrancam o backend Jakarta EE, a app da mãe e o portal médico em paralelo.
+4. Encerram os processos com `Ctrl+C`.
 
 | Endereço | Descrição |
 |---|---|
-| <http://localhost:5173> | Frontend (interface web) |
+| <http://localhost:5173> | App da grávida (React + Vite) |
+| <http://localhost:5174> | Portal clínico (HTML estático) |
 | <http://localhost:9080/api/chat> | Backend (endpoint REST) |
 
 ---
@@ -159,17 +165,30 @@ mvn -q -Pglassfish package cargo:run
 mvn -q -Ppayara    package cargo:run
 ```
 
-### Frontend isolado
+### App da grávida isolada
 
 ```bash
-cd frontend
+cd frontend-mae
 npm install
-npm run dev          # dev server
+npm run dev          # dev server (porta 5173)
 npm run build        # build de produção
 npm run typecheck    # validação TypeScript
 npm run lint         # ESLint
 npm run format       # Prettier
 ```
+
+### Portal médico isolado
+
+Sem build, sem `node_modules` — qualquer servidor estático serve:
+
+```bash
+cd frontend-medico
+python -m http.server 5174
+# ou
+npx serve -p 5174 .
+```
+
+Mais detalhes em [frontend-medico/README.md](frontend-medico/README.md).
 
 ### Modo simulado (sem chamadas OpenAI)
 
@@ -202,14 +221,22 @@ Kairos/
 │   │   └── microprofile-config.properties
 │   └── pom.xml
 │
-├── frontend/                    # SPA React + TypeScript + Vite
+├── frontend-mae/                # App da grávida — React + TypeScript + Vite
 │   ├── src/
 │   │   ├── App.tsx              # Routing por estado + tweaks panel
 │   │   ├── components/          # ios, form, nav, risk, tweaks
 │   │   ├── screens/             # Welcome, Login, Dashboard, Chat, Alerts, …
-│   │   └── theme/               # Design tokens
+│   │   └── theme/               # Design tokens (KAIROS)
 │   ├── vite.config.ts           # Proxy /api → :9080
 │   └── package.json
+│
+├── frontend-medico/             # Portal clínico — HTML estático + React UMD
+│   ├── index.html               # Entry point (sem bundler)
+│   ├── design-tokens.jsx        # Espelha frontend-mae/src/theme/design-tokens.ts
+│   ├── medico-tokens.jsx        # Tokens específicos do portal
+│   ├── medico-shell.jsx         # Layout: sidebar + topbar
+│   ├── medico-screens-*.jsx     # Auth, Dashboard, Patients, Alerts, Agenda
+│   └── medico-chatbot.jsx       # FAB de assistente clínico
 │
 ├── redlight/                    # Demo standalone para pitch (Python)
 │   └── gitblood.py

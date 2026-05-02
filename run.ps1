@@ -36,12 +36,13 @@ if (-not $env:OPENAI_API_KEY) {
     exit 1
 }
 
-$frontendDir = Join-Path $PSScriptRoot 'frontend'
-$backendDir  = Join-Path $PSScriptRoot 'jakarta ee'
+$maeDir     = Join-Path $PSScriptRoot 'frontend-mae'
+$medicoDir  = Join-Path $PSScriptRoot 'frontend-medico'
+$backendDir = Join-Path $PSScriptRoot 'jakarta ee'
 
-if (-not (Test-Path (Join-Path $frontendDir 'node_modules'))) {
-    Write-Host '[frontend] npm install...'
-    Push-Location $frontendDir
+if (-not (Test-Path (Join-Path $maeDir 'node_modules'))) {
+    Write-Host '[frontend-mae] npm install...'
+    Push-Location $maeDir
     npm install --silent
     Pop-Location
 }
@@ -56,30 +57,44 @@ $backendJob = Start-Job -Name 'kairos-backend' -ScriptBlock {
     & mvn -q exec:java '-Dkairos.main=pt.kairos.maternal.web.WebServer' 2>&1
 } -ArgumentList $backendDir, $env:OPENAI_API_KEY, $env:JAVA_HOME, $env:Path
 
-$frontendJob = Start-Job -Name 'kairos-frontend' -ScriptBlock {
+$maeJob = Start-Job -Name 'kairos-frontend-mae' -ScriptBlock {
     param($dir, $path)
     $env:Path = $path
     Set-Location $dir
     & npm run dev 2>&1
-} -ArgumentList $frontendDir, $env:Path
+} -ArgumentList $maeDir, $env:Path
+
+$medicoJob = Start-Job -Name 'kairos-frontend-medico' -ScriptBlock {
+    param($dir)
+    Set-Location $dir
+    # Servidor estático: tenta python, senão npx serve
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        & python -m http.server 5174 2>&1
+    } else {
+        & npx --yes serve -l 5174 . 2>&1
+    }
+} -ArgumentList $medicoDir
+
+$jobs = @($backendJob, $maeJob, $medicoJob)
 
 Write-Host ''
-Write-Host 'Backend:  http://localhost:9080/api/chat' -ForegroundColor Cyan
-Write-Host 'Frontend: http://localhost:5173' -ForegroundColor Cyan
+Write-Host 'Backend:           http://localhost:9080/api/chat' -ForegroundColor Cyan
+Write-Host 'Frontend (mae):    http://localhost:5173'          -ForegroundColor Cyan
+Write-Host 'Frontend (medico): http://localhost:5174'          -ForegroundColor Cyan
 Write-Host 'Ctrl+C para parar.' -ForegroundColor Yellow
 Write-Host ''
 
 try {
     while ($true) {
-        Receive-Job -Job $backendJob, $frontendJob | ForEach-Object { Write-Host $_ }
-        if ($backendJob.State  -ne 'Running' -and $frontendJob.State -ne 'Running') { break }
+        Receive-Job -Job $jobs | ForEach-Object { Write-Host $_ }
+        if (($jobs | Where-Object { $_.State -eq 'Running' }).Count -eq 0) { break }
         Start-Sleep -Milliseconds 400
     }
 }
 finally {
     Write-Host ''
     Write-Host 'A parar servicos...' -ForegroundColor Yellow
-    Stop-Job   -Job $backendJob, $frontendJob -ErrorAction SilentlyContinue
-    Receive-Job -Job $backendJob, $frontendJob -ErrorAction SilentlyContinue | Out-Null
-    Remove-Job -Job $backendJob, $frontendJob -Force -ErrorAction SilentlyContinue
+    Stop-Job   -Job $jobs -ErrorAction SilentlyContinue
+    Receive-Job -Job $jobs -ErrorAction SilentlyContinue | Out-Null
+    Remove-Job -Job $jobs -Force -ErrorAction SilentlyContinue
 }
